@@ -1,5 +1,6 @@
 %define		realname	SDL_mixer
 Summary:	Simple DirectMedia Layer - Sample Mixer Library - MinGW32 cross version
+Summary(pl.UTF-8):	Simple DirectMedia Layer - biblioteka miksująca próbki dźwiękowe - wersja skrośna MinGW32
 Name:		crossmingw32-%{realname}
 Version:	1.2.12
 Release:	1
@@ -8,11 +9,11 @@ Group:		Libraries
 Source0:	http://www.libsdl.org/projects/SDL_mixer/release/%{realname}-%{version}.tar.gz
 # Source0-md5:	e03ff73d77a55e3572ad0217131dc4a1
 URL:		http://www.libsdl.org/projects/SDL_mixer/
-BuildRequires:	crossmingw32-SDL
+BuildRequires:	crossmingw32-SDL >= 1.2.10
 BuildRequires:	crossmingw32-gcc
-BuildRequires:	crossmingw32-libvorbis
+BuildRequires:	crossmingw32-libvorbis >= 1.0
 BuildRequires:	crossmingw32-w32api
-Requires:	crossmingw32-SDL
+Requires:	crossmingw32-SDL >= 1.2.10
 Requires:	crossmingw32-runtime
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
@@ -31,8 +32,13 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define		__pkgconfig_provides	%{nil}
 %define		__pkgconfig_requires	%{nil}
 
-# -z options are invalid for mingw linker
-%define		filterout_ld		-Wl,-z,.*
+%ifnarch %{ix86}
+# arch-specific flags (like alpha's -mieee) are not valid for i386 gcc
+%define		optflags	-O2
+%endif
+# -z options are invalid for mingw linker, most of -f options are Linux-specific
+%define		filterout_ld	-Wl,-z,.*
+%define		filterout_c	-f[-a-z0-9=]*
 
 %description
 Due to popular demand, here is a simple multi-channel audio mixer. It
@@ -42,22 +48,37 @@ libraries.
 
 This package contains the cross version for Win32.
 
+%description -l pl.UTF-8
+SDL_mixer to prosty wielokanałowy mikser audio. Obsługuje 4 kanały
+16-bitowego dźwięku stereo plus jeden kanał dla muzyki miksowanej
+przez popularne biblioteki MikMod MOD, Timitity MIDI i SMPEG MP3.
+
+Ten pakiet zawiera wersję skrośną dla Win32.
+
 %package static
-Summary:	Static SDL_mixer libraries
+Summary:	Static SDL_mixer library (cross MinGW32 version)
+Summary(pl.UTF-8):	Statyczna biblioteka SDL_mixer (wersja skrośna MinGW32)
 Group:		Development/Libraries
 Requires:	%{name}-devel = %{version}-%{release}
 
 %description static
-Static SDL_mixer libraries (cross MinGW32 version).
+Static SDL_mixer library (cross MinGW32 version).
+
+%description static -l pl.UTF-8
+Statyczna biblioteka SDL_mixer (wersja skrośna MinGW32).
 
 %package dll
 Summary:	SDL_mixer - DLL library for Windows
+Summary(pl.UTF-8):	SDL_mixer - biblioteka DLL dla Windows
 Group:		Applications/Emulators
 Requires:	crossmingw32-SDL-dll >= 1.2.10
 Requires:	wine
 
 %description dll
 SDL_mixer - DLL library for Windows.
+
+%description dll -l pl.UTF-8
+SDL_mixer - biblioteka DLL dla Windows.
 
 %prep
 %setup -q -n %{realname}-%{version}
@@ -67,7 +88,9 @@ export PKG_CONFIG_LIBDIR=%{_prefix}/lib/pkgconfig
 %configure \
 	--host=%{target} \
 	--target=%{target} \
-	--with-sdl-prefix=%{_prefix}
+	--with-sdl-prefix=%{_prefix} \
+	--disable-music-mp3 \
+	--disable-music-mod
 
 %{__make}
 
